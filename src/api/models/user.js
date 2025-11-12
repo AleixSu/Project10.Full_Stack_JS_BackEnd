@@ -1,0 +1,46 @@
+const mongoose = require('mongoose')
+const bcrypt = require('bcrypt')
+
+const userSchema = new mongoose.Schema(
+  {
+    nickName: { type: String, required: true, trim: true },
+    name: { type: String, required: true, trim: true },
+    frstSurname: { type: String, required: true, trim: true },
+    scndSurname: { type: String, trim: true },
+    email: { type: String, required: true, trim: true },
+    password: {
+      type: String,
+      required: true,
+      trim: true,
+      minlength: 8,
+      validate: {
+        validator: (v) =>
+          /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\w\s]).{8,}$/.test(v),
+        message:
+          'Password must have at least 8 characters, including one lowercase letter, one uppercase letter, one number, and one special character'
+      }
+    },
+    birthDate: { type: Date, trim: true },
+    profileImg: { type: String, required: true },
+    role: {
+      type: String,
+      required: true,
+      enum: ['user', 'admin'],
+      default: 'user'
+    },
+    location: { type: String, trim: true },
+    attendingEvents: [{ type: mongoose.Types.ObjectId, ref: 'events' }]
+  },
+  {
+    timestamps: true,
+    collection: 'users'
+  }
+)
+
+userSchema.pre('save', function (next) {
+  this.password = bcrypt.hashSync(this.password, 10)
+  next()
+})
+
+const User = mongoose.model('users', userSchema, 'users')
+module.exports = User

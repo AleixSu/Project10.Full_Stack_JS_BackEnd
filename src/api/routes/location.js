@@ -1,0 +1,27 @@
+const { isAuth, allowRoles } = require('../../middlewares/authorization/auth')
+const upload = require('../../middlewares/cloudinary/file')
+const {
+  getLocations,
+  getLocationByID,
+  createLocation,
+  updateLocationInfo,
+  deleteLocation
+} = require('../controllers/location')
+
+const locationRoutes = require('express').Router()
+
+locationRoutes.get('/', getLocations)
+locationRoutes.get('/:id', getLocationByID)
+locationRoutes.post(
+  '/',
+  [isAuth, allowRoles('admin'), upload.single('locationImg')],
+  createLocation
+)
+locationRoutes.patch(
+  '/:id',
+  [isAuth, allowRoles('admin'), upload.single('locationImg')],
+  updateLocationInfo
+)
+locationRoutes.delete('/:id', [isAuth, allowRoles('admin')], deleteLocation)
+
+module.exports = locationRoutes
