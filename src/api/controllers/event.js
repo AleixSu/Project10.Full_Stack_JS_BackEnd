@@ -8,7 +8,7 @@ const getEvents = async (req, res, next) => {
   try {
     const events = await Event.find()
       .populate('attendees')
-      .populate('location')
+      .populate('locationCountry')
       .populate('createdBy')
     if (events.length === 0) {
       return res.status(404).json("There's no events to be found")
@@ -41,18 +41,25 @@ const getEventByID = async (req, res, next) => {
 
 const getEventByLocation = async (req, res, next) => {
   try {
-    const { location } = req.params
-    const eventsByLocation = await Event.find({ location: location })
-      .populate('attendees')
-      .populate('location')
-      .populate('createdBy')
-    if (!eventsByLocation || eventsByLocation.length === 0) {
-      return res.status(404).json("There aren't events in this location")
-    } else {
-      return res.status(200).json(eventsByLocation)
+    if (!req.params.locations) {
+      return res.status(400).json('Missing location ids')
     }
+
+    const ids = req.params.locations.split(',')
+
+    const eventsByLocation = await Event.find({
+      locationCountry: { $in: ids }
+    })
+      .populate('attendees')
+      .populate('locationCountry')
+      .populate('createdBy')
+
+    if (eventsByLocation.length === 0) {
+      return res.status(404).json("There aren't events in this location")
+    }
+
+    return res.status(200).json(eventsByLocation)
   } catch (error) {
-    console.log(error)
     return errorHandler(res, error, 500, 'get the events for this location')
   }
 }
@@ -71,25 +78,29 @@ const createEvent = async (req, res, next) => {
         eventName: req.body.eventName
       })
       if (eventDuplicated) {
-        if (req.file?.path) await deleteFile(req.file.path)
+        if (req.files?.eventImg) await deleteFile(req.files.eventImg[0].path)
+        if (req.files?.eventBgImg)
+          await deleteFile(req.files.eventBgImg[0].path)
         return res.status(400).json('This event already exists')
       } else {
-        if (req.file) {
-          newEvent.eventImg = req.file.path
-        }
+        if (req.files?.eventImg) newEvent.eventImg = req.files.eventImg[0].path
+        if (req.files?.eventBgImg)
+          newEvent.eventBgImg = req.files.eventBgImg[0].path
         const eventCreated = await newEvent.save()
-        await Location.findByIdAndUpdate(eventCreated.location, {
+        await Location.findByIdAndUpdate(eventCreated.locationCountry, {
           $push: { eventList: eventCreated._id }
         })
         return res.status(201).json(eventCreated)
       }
     } else {
-      if (req.file?.path) await deleteFile(req.file.path)
+      if (req.files?.eventImg) await deleteFile(req.files.eventImg[0].path)
+      if (req.files?.eventBgImg) await deleteFile(req.files.eventBgImg[0].path)
       return res.status(401).json('You are not authorized')
     }
   } catch (error) {
     console.log(error)
-    if (req.file?.path) await deleteFile(req.file.path)
+    if (req.files?.eventImg) await deleteFile(req.files.eventImg[0].path)
+    if (req.files?.eventBgImg) await deleteFile(req.files.eventBgImg[0].path)
     return errorHandler(res, error, 500, 'create a new event')
   }
 }
@@ -99,28 +110,39 @@ const updateEventInfo = async (req, res, next) => {
     const { id } = req.params
     const oldEvent = await Event.findById(id)
     if (!oldEvent) {
-      if (req.file?.path) await deleteFile(req.file.path)
+      if (req.files?.eventImg) await deleteFile(req.files.eventImg[0].path)
+      if (req.files?.eventBgImg) await deleteFile(req.files.eventBgImg[0].path)
       return res.status(404).json('This event does not exist')
     }
     if (req.user.role !== 'admin') {
-      if (req.file?.path) await deleteFile(req.file.path)
+      if (req.files?.eventImg) await deleteFile(req.files.eventImg[0].path)
+      if (req.files?.eventBgImg) await deleteFile(req.files.eventBgImg[0].path)
       return res.status(401).json('You are not authorized')
     }
 
-    const updateData = req.body
-    if (req.file) updateData.eventImg = req.file.path
-    if (req.file && oldEvent.eventImg) await deleteFile(oldEvent.eventImg)
+    const updateData = { ...req.body }
+
+    if (req.files?.eventImg) {
+      updateData.eventImg = req.files.eventImg[0].path
+      if (oldEvent.eventImg) await deleteFile(oldEvent.eventImg)
+    }
+
+    if (req.files?.eventBgImg) {
+      updateData.eventBgImg = req.files.eventBgImg[0].path
+      if (oldEvent.eventBgImg) await deleteFile(oldEvent.eventBgImg)
+    }
 
     const eventUpdated = await Event.findByIdAndUpdate(id, updateData, {
       new: true
     })
       .populate('attendees')
-      .populate('location')
+      .populate('locationCountry')
       .populate('createdBy')
     return res.status(200).json(eventUpdated)
   } catch (error) {
     console.log(error)
-    if (req.file?.path) await deleteFile(req.file.path)
+    if (req.files?.eventImg) await deleteFile(req.files.eventImg[0].path)
+    if (req.files?.eventBgImg) await deleteFile(req.files.eventBgImg[0].path)
     return errorHandler(res, error, 500, 'update the event info')
   }
 }
@@ -150,17 +172,21 @@ const signUpToEvent = async (req, res, next) => {
       },
       { new: true }
     )
-      .populate('attendees', 'name email profileImg')
-      .populate('location')
+      .populate('attendees', 'nickName name email profileImg')
+      .populate('locationCountry')
       .populate('createdBy')
 
     await User.findByIdAndUpdate(req.user._id, {
       $addToSet: { attendingEvents: eventUpdated._id }
     })
+    const updatedUser = await User.findById(req.user._id).populate(
+      'attendingEvents'
+    )
 
     return res.status(200).json({
       message: 'You have succesfully signed up to his event.',
-      event: eventUpdated
+      event: eventUpdated,
+      user: updatedUser
     })
   } catch (error) {
     console.log(error)

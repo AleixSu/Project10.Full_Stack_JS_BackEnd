@@ -1,4 +1,5 @@
 const deleteFile = require('../../utils/functions/deleteFile')
+const errorHandler = require('../../utils/functions/errorHandler')
 const Location = require('../models/location')
 
 const getLocations = async (req, res, next) => {
@@ -33,32 +34,43 @@ const getLocationByID = async (req, res, next) => {
   }
 }
 
+const getCountries = async (req, res, next) => {
+  try {
+    const countries = await Location.find({}, { _id: 1, country: 1 }) //1 para incluir el campo. 0 para excluirlo
+    return res.status(200).json(countries)
+  } catch (error) {
+    console.log(error)
+    return errorHandler(res, error, 500, 'get the countries')
+  }
+}
+
 const createLocation = async (req, res, next) => {
   try {
     if (req.user.role !== 'admin') {
       if (req.file?.path) await deleteFile(req.file.path)
-      return res.status(401).json('You are not authorized')
-    } else {
-      const cityDuplicated = await Location.findOne({
-        cityName: req.body.cityName
-      })
-      if (cityDuplicated) {
-        if (req.file?.path) await deleteFile(req.file.path)
-        return res.status(400).json('This city allready exists')
-      } else {
-        const newLocation = new Location({
-          ...req.body,
-          createdBy: req.user._id
-        })
-        if (req.file) {
-          newLocation.locationImg = req.file.path
-        }
-        const locationCreated = await newLocation.save()
-        return res.status(201).json(locationCreated)
-      }
+      return res.status(401).json({ error: 'You are not authorized' })
     }
+
+    const countryDuplicated = await Location.findOne({
+      country: req.body.country
+    })
+    if (countryDuplicated) {
+      if (req.file?.path) await deleteFile(req.file.path)
+      return res.status(400).json({ error: 'This country already exists' })
+    }
+
+    const newLocation = new Location({
+      ...req.body,
+      createdBy: req.user._id
+    })
+    if (req.file) newLocation.locationImg = req.file.path
+
+    const locationCreated = await newLocation.save()
+    return res
+      .status(201)
+      .json({ message: 'Location created successfully', data: locationCreated })
   } catch (error) {
-    console.log(error)
+    console.error(error)
     if (req.file?.path) await deleteFile(req.file.path)
     return errorHandler(res, error, 500, 'create a new location')
   }
@@ -120,6 +132,7 @@ const deleteLocation = async (req, res, next) => {
 module.exports = {
   getLocations,
   getLocationByID,
+  getCountries,
   createLocation,
   updateLocationInfo,
   deleteLocation

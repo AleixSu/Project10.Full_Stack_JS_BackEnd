@@ -10,6 +10,7 @@ const storage = new CloudinaryStorage({
     if (file.fieldname === 'profileImg') folder = 'project10/profile_pictures'
     if (file.fieldname === 'eventImg') folder = 'project10/events_pictures'
     if (file.fieldname === 'locationImg') folder = 'project10/location_pictures'
+    if (file.fieldname === 'eventBgImg') folder = 'project10/eventBg_pictures'
 
     return {
       folder,

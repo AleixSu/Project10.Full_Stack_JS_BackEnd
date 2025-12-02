@@ -6,13 +6,15 @@ const {
   login,
   register,
   updateUserInfo,
-  deleteUser
+  deleteUser,
+  getProfile
 } = require('../controllers/user')
 
 const userRoutes = require('express').Router()
 
 userRoutes.post('/login', login)
 userRoutes.post('/register', upload.single('profileImg'), register)
+userRoutes.get('/profile', isAuth, getProfile)
 userRoutes.get('/', getUsers)
 userRoutes.get('/:id', getUserByID)
 userRoutes.patch('/:id', [isAuth, upload.single('profileImg')], updateUserInfo)

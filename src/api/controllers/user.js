@@ -22,7 +22,7 @@ const register = async (req, res, next) => {
         )
     }
     const newUser = new User(req.body)
-    newUser.profileImg = req.file.path
+    newUser.profileImg = req.file ? req.file.path : null
 
     const userRegistered = await newUser.save()
     return res.status(201).json(userRegistered)
@@ -53,6 +53,25 @@ const login = async (req, res, next) => {
     console.log(error)
     if (req.file?.path) await deleteFile(req.file.path)
     return errorHandler(res, error, 500, 'log in')
+  }
+}
+
+const getProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id)
+      .select('-password')
+      .populate({
+        path: 'attendingEvents',
+        populate: [
+          { path: 'attendees', select: 'nickName name email profileImg' },
+          { path: 'locationCountry' },
+          { path: 'createdBy', select: 'name email profileImg' }
+        ]
+      })
+
+    return res.status(200).json(user)
+  } catch (error) {
+    return errorHandler(res, error, 500, 'get profile data')
   }
 }
 
@@ -110,7 +129,8 @@ const updateUserInfo = async (req, res, next) => {
       scndSurname: req.body.scndSurname,
       birthDate: req.body.birthDate,
       location: req.body.location,
-      email: req.body.email
+      email: req.body.email,
+      gender: req.body.gender
     }
     if (req.body.password) {
       updateData.password = bcrypt.hashSync(req.body.password, 10)
@@ -182,6 +202,7 @@ const deleteUser = async (req, res, next) => {
 module.exports = {
   login,
   register,
+  getProfile,
   getUsers,
   getUserByID,
   updateUserInfo,

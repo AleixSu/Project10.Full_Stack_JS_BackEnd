@@ -5,12 +5,14 @@ const {
   getLocationByID,
   createLocation,
   updateLocationInfo,
-  deleteLocation
+  deleteLocation,
+  getCountries
 } = require('../controllers/location')
 
 const locationRoutes = require('express').Router()
 
 locationRoutes.get('/', getLocations)
+locationRoutes.get('/countries', getCountries)
 locationRoutes.get('/:id', getLocationByID)
 locationRoutes.post(
   '/',

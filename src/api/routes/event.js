@@ -14,16 +14,30 @@ const {
 const eventRoutes = require('express').Router()
 
 eventRoutes.get('/', getEvents)
+eventRoutes.get('/location/:locations', getEventByLocation)
 eventRoutes.get('/:id', getEventByID)
-eventRoutes.get('/location/:location', getEventByLocation)
 eventRoutes.post(
   '/',
-  [isAuth, allowRoles('admin'), upload.single('eventImg')],
+  [
+    isAuth,
+    allowRoles('admin'),
+    upload.fields([
+      { name: 'eventImg', maxCount: 1 },
+      { name: 'eventBgImg', maxCount: 1 }
+    ])
+  ],
   createEvent
 )
 eventRoutes.patch(
   '/:id',
-  [isAuth, allowRoles('admin'), upload.single('eventImg')],
+  [
+    isAuth,
+    allowRoles('admin'),
+    upload.fields([
+      { name: 'eventImg', maxCount: 1 },
+      { name: 'eventBgImg', maxCount: 1 }
+    ])
+  ],
   updateEventInfo
 )
 eventRoutes.patch('/:id/sign_up', isAuth, signUpToEvent)

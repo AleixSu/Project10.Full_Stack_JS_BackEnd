@@ -4,8 +4,8 @@ const bcrypt = require('bcrypt')
 const userSchema = new mongoose.Schema(
   {
     nickName: { type: String, required: true, trim: true },
-    name: { type: String, required: true, trim: true },
-    frstSurname: { type: String, required: true, trim: true },
+    name: { type: String, trim: true },
+    frstSurname: { type: String, trim: true },
     scndSurname: { type: String, trim: true },
     email: { type: String, required: true, trim: true },
     password: {
@@ -21,7 +21,7 @@ const userSchema = new mongoose.Schema(
       }
     },
     birthDate: { type: Date, trim: true },
-    profileImg: { type: String, required: true },
+    profileImg: { type: String },
     role: {
       type: String,
       required: true,
@@ -29,7 +29,8 @@ const userSchema = new mongoose.Schema(
       default: 'user'
     },
     location: { type: String, trim: true },
-    attendingEvents: [{ type: mongoose.Types.ObjectId, ref: 'events' }]
+    attendingEvents: [{ type: mongoose.Types.ObjectId, ref: 'events' }],
+    gender: { type: String }
   },
   {
     timestamps: true,
