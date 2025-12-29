@@ -7,6 +7,12 @@ de imágenes mediante Cloudinary, sistema de **autenticación con JWT** y
 autorización por **roles** (`user`, `admin`).
 
 ---
+## Aplicación desplegada
+Frontend (Vercel): https://project10-full-stack-js-front-end-git-main-aleixsus-projects.vercel.app
+
+Repositorio FrontEnd: https://github.com/AleixSu/Project10.Full_Stack_JS_FrontEnd
+
+Backend desplegado (Render): https://project10-full-stack-js-backend.onrender.com
 
 ## Instalación y uso
 
