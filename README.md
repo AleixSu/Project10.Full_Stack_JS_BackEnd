@@ -8,7 +8,7 @@ autorización por **roles** (`user`, `admin`).
 
 ---
 ## Aplicación desplegada
-Frontend (Vercel): https://project10-full-stack-js-front-end-git-main-aleixsus-projects.vercel.app
+Frontend (Vercel):https://project10-full-stack-js-front-end.vercel.app/
 
 Repositorio FrontEnd: https://github.com/AleixSu/Project10.Full_Stack_JS_FrontEnd
 
